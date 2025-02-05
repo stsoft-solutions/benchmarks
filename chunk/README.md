@@ -8,11 +8,11 @@ Chunk size = 50;
 - Chunk - simplest implementation with yield.
 
 ## Results
-BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.2894)
-12th Gen Intel Core i7-1255U, 1 CPU, 12 logical and 10 physical cores
-.NET SDK 9.0.102
-  [Host]     : .NET 9.0.1 (9.0.124.61010), X64 RyuJIT AVX2
-  DefaultJob : .NET 9.0.1 (9.0.124.61010), X64 RyuJIT AVX2
+BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.2894)<br>
+12th Gen Intel Core i7-1255U, 1 CPU, 12 logical and 10 physical cores<br>
+.NET SDK 9.0.102<br>
+  [Host]     : .NET 9.0.1 (9.0.124.61010), X64 RyuJIT AVX2<br>
+  DefaultJob : .NET 9.0.1 (9.0.124.61010), X64 RyuJIT AVX2<br>
 
 
 | Method     | NumberOfElements | Mean          | Error        | StdDev       | Gen0    | Allocated |
