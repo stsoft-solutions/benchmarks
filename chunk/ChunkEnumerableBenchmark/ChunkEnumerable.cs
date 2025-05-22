@@ -12,11 +12,11 @@ public readonly struct ChunkEnumerable<T> : IEnumerable<Chunk<T>>
     private readonly int _chunkSize;
 
     public ChunkEnumerable(IEnumerable<T> source, int chunkSize)
-{
-    _source = source;
-    _chunkSize = chunkSize;
-}
-   
+    {
+        _source = source;
+        _chunkSize = chunkSize;
+    }
+
     public Enumerator GetEnumerator()
     {
         return new Enumerator(_source.GetEnumerator(), _chunkSize);
