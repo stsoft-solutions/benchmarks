@@ -42,14 +42,14 @@ public class StringPoolBenchmarks
 
         // Fill the pool with strings, using multiple threads
         Parallel.ForEach(_testStrings, new ParallelOptions { MaxDegreeOfParallelism = ThreadCount },
-            s => { ids.Add((pool.GetId(s),s)); });
+            s => { ids.Add((pool.GetId(s), s)); });
 
         // Retrieve strings from the pool using multiple threads
         Parallel.ForEach(ids, new ParallelOptions { MaxDegreeOfParallelism = ThreadCount },
             bag =>
             {
                 pool.TryGetString(bag.id, out var s);
-                
+
                 if (!ReferenceEquals(s, bag.value))
                     throw new Exception($"Expected {bag.value}, but got {s}");
             });
