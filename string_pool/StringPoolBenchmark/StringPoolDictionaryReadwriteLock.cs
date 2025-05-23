@@ -4,10 +4,15 @@ namespace StringPoolBenchmark;
 
 public sealed class StringPoolDictionaryReadwriteLock : IStringPool, IDisposable
 {
+    private readonly Dictionary<int, string> _idToString = new();
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly Dictionary<string, int> _stringToId = new();
-    private readonly Dictionary<int, string> _idToString = new();
     private int _nextId = 1;
+
+    public void Dispose()
+    {
+        _lock.Dispose();
+    }
 
     public int GetId(string value)
     {
@@ -68,10 +73,5 @@ public sealed class StringPoolDictionaryReadwriteLock : IStringPool, IDisposable
         {
             _lock.ExitWriteLock();
         }
-    }
-
-    public void Dispose()
-    {
-        _lock.Dispose();
     }
 }

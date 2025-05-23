@@ -12,7 +12,7 @@ public class StringPoolDictionaryLockTests
         var id2 = pool.GetId("test");
         Assert.Equal(id1, id2);
     }
-    
+
     [Fact]
     public void GetId_ShouldReturnDifferentIdsForDifferentStrings()
     {
@@ -21,7 +21,7 @@ public class StringPoolDictionaryLockTests
         var id2 = pool.GetId("test2");
         Assert.NotEqual(id1, id2);
     }
-    
+
     [Fact]
     public void TryGetString_ShouldReturnTrueAndCorrectStringForValidId()
     {
@@ -31,7 +31,7 @@ public class StringPoolDictionaryLockTests
         Assert.True(result);
         Assert.Equal("test", value);
     }
-    
+
     [Fact]
     public void TryGetString_ShouldReturnFalseForInvalidId()
     {
@@ -40,7 +40,7 @@ public class StringPoolDictionaryLockTests
         Assert.False(result);
         Assert.Null(value);
     }
-    
+
     [Fact]
     public void Clear_ShouldRemoveAllEntries()
     {
@@ -51,7 +51,7 @@ public class StringPoolDictionaryLockTests
         Assert.False(result);
         Assert.Null(value);
     }
-    
+
     [Fact]
     public void GetId_ShouldThrowArgumentNullExceptionForNullString()
     {

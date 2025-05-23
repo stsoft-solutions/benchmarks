@@ -4,15 +4,15 @@ namespace StringPoolBenchmark;
 
 public sealed class StringPoolDictionaryLock : IStringPool
 {
+    private readonly Dictionary<int, string> _idToString = new();
     private readonly Lock _lock = new();
     private readonly Dictionary<string, int> _stringToId = new();
-    private readonly Dictionary<int, string> _idToString = new();
     private int _nextId = 1;
 
     public int GetId(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        
+
         lock (_lock)
         {
             if (_stringToId.TryGetValue(value, out var existingId))

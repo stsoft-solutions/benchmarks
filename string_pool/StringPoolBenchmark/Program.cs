@@ -9,13 +9,14 @@ BenchmarkRunner.Run<StringPoolBenchmarks>();
 [MemoryDiagnoser]
 public class StringPoolBenchmarks
 {
+    private StringPoolDictionaryLock _lockPool = null!;
+    private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
+    private StringPoolState _statePool = null!;
+
+    private string[] _testStrings = null!;
     [Params(1000, 10000)] public int DataSize { get; [UsedImplicitly] set; }
 
     [Params(1, 8)] public int ThreadCount { get; [UsedImplicitly] set; }
-
-    private string[] _testStrings = null!;
-    private StringPoolDictionaryLock _lockPool = null!;
-    private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -23,6 +24,7 @@ public class StringPoolBenchmarks
         _testStrings = Enumerable.Range(0, DataSize).Select(i => $"str{i}").ToArray();
         _lockPool = new StringPoolDictionaryLock();
         _rwLockPool = new StringPoolDictionaryReadwriteLock();
+        _statePool = new StringPoolState();
     }
 
     private void AddAndGetTest(IStringPool pool)
@@ -36,25 +38,33 @@ public class StringPoolBenchmarks
 
     private void ConcurrentTest(IStringPool pool)
     {
-        var ids = new ConcurrentBag<int>();
-        
+        var ids = new ConcurrentBag<(int id, string value)>();
+
         // Fill the pool with strings, using multiple threads
-        Parallel.ForEach(_testStrings, new ParallelOptions { MaxDegreeOfParallelism = ThreadCount }, s =>
-        {
-            ids.Add(pool.GetId(s));
-        });
-        
+        Parallel.ForEach(_testStrings, new ParallelOptions { MaxDegreeOfParallelism = ThreadCount },
+            s => { ids.Add((pool.GetId(s),s)); });
+
         // Retrieve strings from the pool using multiple threads
-        Parallel.ForEach(ids, new ParallelOptions { MaxDegreeOfParallelism = ThreadCount }, id =>
-        {
-            pool.TryGetString(id, out _);
-        });
+        Parallel.ForEach(ids, new ParallelOptions { MaxDegreeOfParallelism = ThreadCount },
+            bag =>
+            {
+                pool.TryGetString(bag.id, out var s);
+                
+                if (!ReferenceEquals(s, bag.value))
+                    throw new Exception($"Expected {bag.value}, but got {s}");
+            });
     }
 
     [Benchmark]
     public void DictionaryLock_AddAndGet()
     {
         AddAndGetTest(_lockPool);
+    }
+
+    [Benchmark]
+    public void StatePool_AddAndGet()
+    {
+        AddAndGetTest(_statePool);
     }
 
     [Benchmark]
@@ -67,6 +77,12 @@ public class StringPoolBenchmarks
     public void DictionaryLock_Concurrent()
     {
         ConcurrentTest(_lockPool);
+    }
+
+    [Benchmark]
+    public void StatePool_Concurrent()
+    {
+        ConcurrentTest(_statePool);
     }
 
     [Benchmark]
