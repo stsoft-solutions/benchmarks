@@ -7,10 +7,6 @@ namespace StringPoolBenchmark;
 [MemoryDiagnoser]
 public class StringPoolBenchmarks
 {
-    private LockStringPool _lockPool = null!;
-    private ReadWriteStringPool _rwLockPool = null!;
-    private LockFreeStringPool _lockFreePool = null!;
-
     private string[] _testStrings = null!;
     [Params(1000, 50_000, 100_000)] public int DataSize { get; [UsedImplicitly] set; }
 
@@ -18,9 +14,6 @@ public class StringPoolBenchmarks
     public void Setup()
     {
         _testStrings = Enumerable.Range(0, DataSize).Select(i => $"str{i}").ToArray();
-        _lockPool = new LockStringPool();
-        _rwLockPool = new ReadWriteStringPool();
-        _lockFreePool = new LockFreeStringPool();
     }
 
     private void SingleThreadTest(IStringPool pool)
@@ -38,56 +31,60 @@ public class StringPoolBenchmarks
 
     private void MultiThreadTest(IStringPool pool)
     {
-        var ids = new ConcurrentBag<(int id, string value)>();
-
         // Fill the pool with strings, using multiple threads
         Parallel.ForEach(_testStrings,
-            s => { ids.Add((pool.GetId(s), s)); });
+            s => pool.GetId(s));
 
         // Retrieve strings from the pool using multiple threads
-        Parallel.ForEach(ids,
-            bag =>
+        Parallel.ForEach(_testStrings,
+            s =>
             {
-                pool.TryGetString(bag.id, out var s);
+                pool.TryGetString(pool.GetId(s), out var poolString);
 
-                if (!ReferenceEquals(s, bag.value))
-                    throw new Exception($"Expected {bag.value}, but got {s}");
+                if (!ReferenceEquals(s, poolString))
+                    throw new Exception($"Expected {poolString}, but got {s}");
             });
     }
 
     [Benchmark]
     public void Lock_SingleThread()
     {
-        SingleThreadTest(_lockPool);
+        var lockPool = new LockStringPool();
+        SingleThreadTest(lockPool);
     }
 
     [Benchmark]
     public void RwLock_SingleThread()
     {
-        SingleThreadTest(_rwLockPool);
+        var rwLockPool = new ReadWriteStringPool();
+        SingleThreadTest(rwLockPool);
     }
 
     [Benchmark]
     public void LockFree_SingleThread()
     {
-        SingleThreadTest(_lockFreePool);
+        var lockFreePool = new LockFreeStringPool();
+        SingleThreadTest(lockFreePool);
     }
 
     [Benchmark]
     public void Lock_MultiThread()
     {
-        MultiThreadTest(_lockPool);
+        var lockPool = new LockStringPool();
+        MultiThreadTest(lockPool);
     }
 
     [Benchmark]
     public void RwLock_MultiThread()
     {
-        MultiThreadTest(_rwLockPool);
+        var rwLockPool = new ReadWriteStringPool();
+        MultiThreadTest(rwLockPool);
     }
 
     [Benchmark]
     public void LockFree_MultiThread()
     {
-        MultiThreadTest(_lockFreePool);
+        var lockFreePool = new LockFreeStringPool();
+        MultiThreadTest(lockFreePool);
     }
 }

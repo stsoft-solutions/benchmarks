@@ -5,7 +5,7 @@ namespace StringPoolBenchmark;
 public sealed class LockStringPool : IStringPool
 {
     private readonly Dictionary<int, string> _idToString = new();
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private readonly Dictionary<string, int> _stringToId = new();
     private int _nextId = 1;
 
@@ -13,7 +13,7 @@ public sealed class LockStringPool : IStringPool
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             if (_stringToId.TryGetValue(value, out var existingId))
                 return existingId;
@@ -27,7 +27,7 @@ public sealed class LockStringPool : IStringPool
 
     public bool TryGetString(int id, [MaybeNullWhen(false)] out string value)
     {
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             return _idToString.TryGetValue(id, out value);
         }
@@ -35,7 +35,7 @@ public sealed class LockStringPool : IStringPool
 
     public void Clear()
     {
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             _stringToId.Clear();
             _idToString.Clear();
