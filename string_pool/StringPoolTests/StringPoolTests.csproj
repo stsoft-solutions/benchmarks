@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\StringPoolBenchmark\StringPoolBenchmark.csproj" />
+        <ProjectReference Include="..\StringPoolBenchmark\StringPoolBenchmark.csproj"/>
     </ItemGroup>
 
 </Project>

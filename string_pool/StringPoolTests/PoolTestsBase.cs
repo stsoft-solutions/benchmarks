@@ -64,7 +64,7 @@ public abstract class PoolTestsBase<TPool> where TPool : IStringPool, new()
     [Fact]
     public void GetId_ShouldThrowArgumentNullExceptionForNullString()
     {
-        var pool = new StringPoolState();
+        var pool = new LockFreeStringPool();
         Assert.Throws<ArgumentNullException>(() => pool.GetId(null!));
     }
 }

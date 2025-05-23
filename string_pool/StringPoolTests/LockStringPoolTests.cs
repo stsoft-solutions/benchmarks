@@ -4,6 +4,6 @@ using StringPoolBenchmark;
 namespace StringPoolTests;
 
 [UsedImplicitly]
-public class StringPoolDictionaryReadWriteLockTests : PoolTestsBase<StringPoolDictionaryReadwriteLock>
+public class LockStringPoolTests : PoolTestsBase<LockStringPool>
 {
 }

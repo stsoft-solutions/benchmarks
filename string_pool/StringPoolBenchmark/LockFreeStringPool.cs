@@ -3,10 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace StringPoolBenchmark;
 
-public sealed class StringPoolState : IStringPool
+public sealed class LockFreeStringPool : IStringPool
 {
     private volatile PoolState _state = new();
-
 
     public int GetId(string value)
     {
@@ -43,31 +42,8 @@ public sealed class StringPoolState : IStringPool
 
     public void Clear()
     {
-        // Atomically swap in a new state
+        // Atomic swap in a new state
         _state = new PoolState();
-    }
-
-    public int GetId1(string value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        while (true)
-        {
-            var state = _state;
-
-            if (state.StringToId.TryGetValue(value, out var existingId))
-                return existingId;
-
-            var newId = Interlocked.Increment(ref state.NextId);
-
-            // If another thread added it, retry
-            if (!state.StringToId.TryAdd(value, newId))
-                continue;
-
-            state.IdToString.TryAdd(newId, value);
-
-            return newId;
-        }
     }
 
     private class PoolState

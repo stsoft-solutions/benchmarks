@@ -7,41 +7,45 @@ namespace StringPoolBenchmark;
 [MemoryDiagnoser]
 public class StringPoolBenchmarks
 {
-    private StringPoolDictionaryLock _lockPool = null!;
-    private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
-    private StringPoolState _statePool = null!;
+    private LockStringPool _lockPool = null!;
+    private ReadWriteStringPool _rwLockPool = null!;
+    private LockFreeStringPool _lockFreePool = null!;
 
     private string[] _testStrings = null!;
-    [Params(1000, 10000)] public int DataSize { get; [UsedImplicitly] set; }
+    [Params(1000, 50_000, 100_000)] public int DataSize { get; [UsedImplicitly] set; }
 
     [GlobalSetup]
     public void Setup()
     {
         _testStrings = Enumerable.Range(0, DataSize).Select(i => $"str{i}").ToArray();
-        _lockPool = new StringPoolDictionaryLock();
-        _rwLockPool = new StringPoolDictionaryReadwriteLock();
-        _statePool = new StringPoolState();
+        _lockPool = new LockStringPool();
+        _rwLockPool = new ReadWriteStringPool();
+        _lockFreePool = new LockFreeStringPool();
     }
 
-    private void AddAndGetTest(IStringPool pool)
+    private void SingleThreadTest(IStringPool pool)
     {
         foreach (var s in _testStrings)
+        {
             pool.GetId(s);
+        }
 
         foreach (var s in _testStrings)
+        {
             pool.TryGetString(_lockPool.GetId(s), out _);
+        }
     }
 
-    private void ConcurrentTest(IStringPool pool)
+    private void MultiThreadTest(IStringPool pool)
     {
         var ids = new ConcurrentBag<(int id, string value)>();
 
         // Fill the pool with strings, using multiple threads
-        Parallel.ForEach(_testStrings, 
+        Parallel.ForEach(_testStrings,
             s => { ids.Add((pool.GetId(s), s)); });
 
         // Retrieve strings from the pool using multiple threads
-        Parallel.ForEach(ids, 
+        Parallel.ForEach(ids,
             bag =>
             {
                 pool.TryGetString(bag.id, out var s);
@@ -52,38 +56,38 @@ public class StringPoolBenchmarks
     }
 
     [Benchmark]
-    public void DictionaryLock_AddAndGet()
+    public void Lock_SingleThread()
     {
-        AddAndGetTest(_lockPool);
+        SingleThreadTest(_lockPool);
     }
 
     [Benchmark]
-    public void StatePool_AddAndGet()
+    public void RwLock_SingleThread()
     {
-        AddAndGetTest(_statePool);
+        SingleThreadTest(_rwLockPool);
     }
 
     [Benchmark]
-    public void DictionaryReadwriteLock_AddAndGet()
+    public void LockFree_SingleThread()
     {
-        AddAndGetTest(_rwLockPool);
+        SingleThreadTest(_lockFreePool);
     }
 
     [Benchmark]
-    public void DictionaryLock_Concurrent()
+    public void Lock_MultiThread()
     {
-        ConcurrentTest(_lockPool);
+        MultiThreadTest(_lockPool);
     }
 
     [Benchmark]
-    public void StatePool_Concurrent()
+    public void RwLock_MultiThread()
     {
-        ConcurrentTest(_statePool);
+        MultiThreadTest(_rwLockPool);
     }
 
     [Benchmark]
-    public void DictionaryReadwriteLock_Concurrent()
+    public void LockFree_MultiThread()
     {
-        ConcurrentTest(_rwLockPool);
+        MultiThreadTest(_lockFreePool);
     }
 }

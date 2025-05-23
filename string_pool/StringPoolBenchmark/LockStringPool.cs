@@ -2,7 +2,7 @@
 
 namespace StringPoolBenchmark;
 
-public sealed class StringPoolDictionaryLock : IStringPool
+public sealed class LockStringPool : IStringPool
 {
     private readonly Dictionary<int, string> _idToString = new();
     private readonly Lock _lock = new();

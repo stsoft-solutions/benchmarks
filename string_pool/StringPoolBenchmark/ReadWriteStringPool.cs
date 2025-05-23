@@ -2,7 +2,7 @@
 
 namespace StringPoolBenchmark;
 
-public sealed class StringPoolDictionaryReadwriteLock : IStringPool, IDisposable
+public sealed class ReadWriteStringPool : IStringPool, IDisposable
 {
     private readonly Dictionary<int, string> _idToString = new();
     private readonly ReaderWriterLockSlim _lock = new();
