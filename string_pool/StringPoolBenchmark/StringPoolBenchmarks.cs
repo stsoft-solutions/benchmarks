@@ -32,7 +32,7 @@ public class StringPoolBenchmarks
 
         foreach (var s in _testStrings)
         {
-            pool.TryGetString(_lockPool.GetId(s), out _);
+            pool.TryGetString(pool.GetId(s), out _);
         }
     }
 
