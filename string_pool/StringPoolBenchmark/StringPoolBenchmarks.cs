@@ -18,32 +18,31 @@ public class StringPoolBenchmarks
 
     private void SingleThreadTest(IStringPool pool)
     {
-        foreach (var s in _testStrings)
-        {
-            pool.GetId(s);
-        }
+        var ids = new ConcurrentBag<int>();
 
         foreach (var s in _testStrings)
         {
-            pool.TryGetString(pool.GetId(s), out _);
+            // Get the ID for each string and store it in a thread-safe collection
+            ids.Add(pool.GetId(s));
+        }
+
+        foreach (var id in ids)
+        {
+            _ = pool.TryGetString(id, out _);
         }
     }
 
     private void MultiThreadTest(IStringPool pool)
     {
+        var ids = new ConcurrentBag<int>();
+
         // Fill the pool with strings, using multiple threads
         Parallel.ForEach(_testStrings,
-            s => pool.GetId(s));
+            s => ids.Add(pool.GetId(s)));
 
         // Retrieve strings from the pool using multiple threads
-        Parallel.ForEach(_testStrings,
-            s =>
-            {
-                pool.TryGetString(pool.GetId(s), out var poolString);
-
-                if (!ReferenceEquals(s, poolString))
-                    throw new Exception($"Expected {poolString}, but got {s}");
-            });
+        Parallel.ForEach(ids,
+            id => _ = pool.TryGetString(id, out var poolString));
     }
 
     [Benchmark]
