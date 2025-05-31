@@ -1,5 +1,8 @@
 <Solution>
-    <Project Path="Benchmarks\Benchmarks.csproj" Type="Classic C#"/>
-    <Project Path="Core\Core.csproj" Type="Classic C#"/>
-    <Project Path="Tests\Tests.csproj" Type="Classic C#"/>
+    <Folder Name="/Solution Items/">
+        <File Path="README.md" />
+    </Folder>
+    <Project Path="Benchmarks\Benchmarks.csproj" />
+    <Project Path="Core\Core.csproj" />
+    <Project Path="Tests\Tests.csproj" />
 </Solution>
