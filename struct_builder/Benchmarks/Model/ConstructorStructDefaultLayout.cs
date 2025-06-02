@@ -13,6 +13,7 @@ public readonly struct ConstructorStructDefaultLayout
     public readonly char CharValue;
     public readonly long LongValue;
     public readonly short ShortValue;
+    public readonly bool BoolValue0;
     public readonly bool BoolValue;
     public readonly double DoubleValue1;
 
@@ -31,6 +32,8 @@ public readonly struct ConstructorStructDefaultLayout
         DateTimeValue = dateTimeValue;
         CharValue = charValue;
         LongValue = longValue;
+        BoolValue = boolValue;
+        BoolValue0 = boolValue;
         ShortValue = shortValue;
         BoolValue = boolValue;
         DoubleValue1 = doubleValue1;

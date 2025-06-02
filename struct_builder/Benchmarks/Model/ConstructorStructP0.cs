@@ -15,6 +15,7 @@ public readonly struct ConstructorStructP0
     public readonly char CharValue;
     public readonly long LongValue;
     public readonly short ShortValue;
+    public readonly byte BoolValue0;
     public readonly bool BoolValue;
     public readonly double DoubleValue1;
 

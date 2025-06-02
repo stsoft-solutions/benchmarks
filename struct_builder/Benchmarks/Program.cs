@@ -1,10 +1,12 @@
 ﻿using Benchmarks;
+using Benchmarks.Model;
+using Core;
 
 var results = new List<BenchmarkDotNet.Reports.Summary>
 {
     //BenchmarkDotNet.Running.BenchmarkRunner.Run<WriteBenchmarks>(),
     //BenchmarkDotNet.Running.BenchmarkRunner.Run<ReadBenchmarks>(),
-    BenchmarkDotNet.Running.BenchmarkRunner.Run<EnumerateStructBenchmarks>()
+    //BenchmarkDotNet.Running.BenchmarkRunner.Run<EnumerateStructBenchmarks>()
 };
 
 // foreach (var summary in results)
@@ -17,12 +19,10 @@ var results = new List<BenchmarkDotNet.Reports.Summary>
 //     Console.WriteLine(summary.Reports);
 // }
 
-return;
+//return;
 
-//PrintStructInfo<ConstructorStructDefaultLayout>();
-//PrintStructInfo<ConstructorStructP0>();
-//PrintStructInfo<ConstructorStructP1>();
+SizeCalculator.PrintStructInfo<ConstructorStructDefaultLayout>();
+SizeCalculator.PrintStructInfo<ConstructorStructP0>();
+SizeCalculator.PrintStructInfo<ConstructorStructP1>();
 // I don't know how to get the size of a struct with StructLayout(LayoutKind.Auto), so we will skip it for now
 // PrintStructInfo<ConstructorStructAuto>();
-
-return;
