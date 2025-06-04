@@ -17,10 +17,10 @@ public sealed class LockFreeStringPool : IStringPool
 
             // Ensure only one ID is created for a string across threads and
             // that both dictionaries remain in sync.
-            var id = state.StringToId.GetOrAdd(value, static (v, s) =>
+            var id = state.StringToId.GetOrAdd(value, static (v, poolState) =>
             {
-                var newId = Interlocked.Increment(ref s.NextId);
-                s.IdToString[newId] = v;
+                var newId = Interlocked.Increment(ref poolState.NextId);
+                poolState.IdToString[newId] = v;
                 return newId;
             }, state);
 
