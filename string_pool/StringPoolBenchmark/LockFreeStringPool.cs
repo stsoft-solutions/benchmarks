@@ -15,18 +15,14 @@ public sealed class LockFreeStringPool : IStringPool
         {
             var state = _state;
 
-            // Ensure only one ID is created for a string across threads
+            // Ensure only one ID is created for a string across threads and
+            // that both dictionaries remain in sync.
             var id = state.StringToId.GetOrAdd(value, static (v, s) =>
             {
                 var newId = Interlocked.Increment(ref s.NextId);
-                // Map the new ID back to the string.  ConcurrentDictionary allows
-                // overwriting with the same value, so we just set it.
                 s.IdToString[newId] = v;
                 return newId;
             }, state);
-
-            // Guarantee the reverse map exists when we retrieved an existing ID
-            state.IdToString.TryAdd(id, value);
 
             // State may change due to Clear().  If so, retry using the new state
             if (state != _state) continue;
