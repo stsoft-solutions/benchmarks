@@ -1,5 +1,5 @@
 # Chunk enumeration
-Split a IEnumerable<T> into chunks of IEnumerable<T> with a specified size.
+Split an IEnumerable<T> into chunks of IEnumerable<T> with a specified size.
 
 Chunk size = 50;
 
