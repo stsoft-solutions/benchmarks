@@ -15,15 +15,14 @@ public class ConcurrentGetIdTests
         var ids = new int[threadCount];
         var threads = new Thread[threadCount];
 
+        var tasks = new Task[threadCount];
         for (var i = 0; i < threadCount; i++)
         {
             var index = i;
-            threads[i] = new Thread(() => ids[index] = pool.GetId(value));
-            threads[i].Start();
+            tasks[i] = Task.Run(() => ids[index] = pool.GetId(value));
         }
 
-        foreach (var t in threads)
-            t.Join();
+        Task.WhenAll(tasks).Wait();
 
         for (var i = 1; i < threadCount; i++)
             Assert.Equal(ids[0], ids[i]);
