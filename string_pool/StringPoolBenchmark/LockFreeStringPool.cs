@@ -15,23 +15,19 @@ public sealed class LockFreeStringPool : IStringPool
         {
             var state = _state;
 
-            // Try to get the ID for the string
-            if (state.StringToId.TryGetValue(value, out var id)) return id;
+            // Ensure only one ID is created for a string across threads and
+            // that both dictionaries remain in sync.
+            var id = state.StringToId.GetOrAdd(value, static (v, poolState) =>
+            {
+                var newId = Interlocked.Increment(ref poolState.NextId);
+                poolState.IdToString[newId] = v;
+                return newId;
+            }, state);
 
-            // Get a new ID
-            var newId = Interlocked.Increment(ref state.NextId);
-
-            // Try to add the new ID to the dictionary if it fails, retry
-            if (!state.IdToString.TryAdd(newId, value)) continue;
-
-            // Add the string to the dictionary
-            state.StringToId[value] = newId;
-
-            // Check if the state has changed since we started
-            // If it has, we need to retry
+            // State may change due to Clear().  If so, retry using the new state
             if (state != _state) continue;
 
-            return newId;
+            return id;
         }
     }
 
