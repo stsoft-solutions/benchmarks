@@ -4,7 +4,7 @@ BenchmarkDotNet v0.15.0, Windows 11 (10.0.22631.5335/23H2/2023Update/SunValley3)
 - [Host]     : .NET 9.0.5 (9.0.525.21509), X64 RyuJIT AVX2
 - DefaultJob : .NET 9.0.5 (9.0.525.21509), X64 RyuJIT AVX2
 
-
+<div style="overflow-x: auto;">
 | Method                | DataSize | Mean         | Error      | StdDev       | Median       | Gen0      | Gen1      | Gen2      | Allocated   |
 |---------------------- |--------- |-------------:|-----------:|-------------:|-------------:|----------:|----------:|----------:|------------:|
 | Lock_SingleThread     | 1000     |     61.15 us |   0.955 us |     0.847 us |     60.94 us |   16.4795 |   16.3574 |    0.2441 |   211.94 KB |
@@ -25,6 +25,7 @@ BenchmarkDotNet v0.15.0, Windows 11 (10.0.22631.5335/23H2/2023Update/SunValley3)
 | Lock_MultiThread      | 100000   | 26,469.56 us | 524.121 us |   514.757 us | 26,542.32 us |  812.5000 |  750.0000 |  687.5000 |  18150.4 KB |
 | RwLock_MultiThread    | 100000   | 52,167.25 us | 911.429 us | 1,335.962 us | 51,945.60 us | 1000.0000 |  888.8889 |  888.8889 | 18107.65 KB |
 | LockFree_MultiThread  | 100000   | 42,996.19 us | 853.257 us | 2,461.843 us | 43,140.29 us | 2307.6923 | 2230.7692 |  923.0769 |  23501.4 KB |
+</div>
 
 - DataSize: Value of the 'DataSize' parameter
 - Mean: Arithmetic mean of all measurements
