@@ -5,8 +5,14 @@ namespace StringPoolBenchmark;
 
 public sealed class StringPoolState : IStringPool
 {
-    private volatile PoolState _state = new();
+    private readonly int _initialCapacity;
+    private volatile PoolState _state;
 
+    public StringPoolState(int initialCapacity)
+    {
+        _initialCapacity = initialCapacity;
+        _state = new PoolState(_initialCapacity);
+    }
 
     public int GetId(string value)
     {
@@ -34,7 +40,6 @@ public sealed class StringPoolState : IStringPool
         }
     }
 
-
     public bool TryGetString(int id, [MaybeNullWhen(false)] out string value)
     {
         var state = _state;
@@ -43,8 +48,8 @@ public sealed class StringPoolState : IStringPool
 
     public void Clear()
     {
-        // Atomically swap in a new state
-        _state = new PoolState();
+        // Atomic swap in a new state
+        _state = new PoolState(_initialCapacity);
     }
 
     public int GetId1(string value)
@@ -72,8 +77,15 @@ public sealed class StringPoolState : IStringPool
 
     private class PoolState
     {
-        public readonly ConcurrentDictionary<int, string> IdToString = new();
-        public readonly ConcurrentDictionary<string, int> StringToId = new();
+        public PoolState(int initialCapacity)
+        {
+            IdToString = new ConcurrentDictionary<int, string>(-1, initialCapacity);
+            StringToId = new ConcurrentDictionary<string, int>(-1, initialCapacity);
+        }
+        
+        public readonly ConcurrentDictionary<int, string> IdToString;
+        public readonly ConcurrentDictionary<string, int> StringToId;
+        
         public int NextId;
     }
 }

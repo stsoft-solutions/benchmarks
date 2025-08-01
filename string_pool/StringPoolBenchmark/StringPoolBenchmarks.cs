@@ -10,6 +10,7 @@ public class StringPoolBenchmarks
     private StringPoolDictionaryLock _lockPool = null!;
     private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
     private StringPoolState _statePool = null!;
+    private LockFreeStringIdMap _lockFreePool = null!;
 
     private string[] _testStrings = null!;
     [Params(1000, 10000)] public int DataSize { get; [UsedImplicitly] set; }
@@ -18,18 +19,23 @@ public class StringPoolBenchmarks
     public void Setup()
     {
         _testStrings = Enumerable.Range(0, DataSize).Select(i => $"str{i}").ToArray();
-        _lockPool = new StringPoolDictionaryLock();
-        _rwLockPool = new StringPoolDictionaryReadwriteLock();
-        _statePool = new StringPoolState();
+        _lockPool = new StringPoolDictionaryLock(DataSize);
+        _rwLockPool = new StringPoolDictionaryReadwriteLock(DataSize);
+        _statePool = new StringPoolState(DataSize);
+        _lockFreePool = new LockFreeStringIdMap(DataSize); 
     }
 
     private void AddAndGetTest(IStringPool pool)
     {
         foreach (var s in _testStrings)
+        {
             pool.GetId(s);
+        }
 
         foreach (var s in _testStrings)
+        {
             pool.TryGetString(_lockPool.GetId(s), out _);
+        }
     }
 
     private void ConcurrentTest(IStringPool pool)
@@ -37,11 +43,11 @@ public class StringPoolBenchmarks
         var ids = new ConcurrentBag<(int id, string value)>();
 
         // Fill the pool with strings, using multiple threads
-        Parallel.ForEach(_testStrings, 
+        Parallel.ForEach(_testStrings,
             s => { ids.Add((pool.GetId(s), s)); });
 
         // Retrieve strings from the pool using multiple threads
-        Parallel.ForEach(ids, 
+        Parallel.ForEach(ids,
             bag =>
             {
                 pool.TryGetString(bag.id, out var s);
@@ -55,6 +61,12 @@ public class StringPoolBenchmarks
     public void DictionaryLock_AddAndGet()
     {
         AddAndGetTest(_lockPool);
+    }
+
+    [Benchmark]
+    public void LockFree_AddAndGet()
+    {
+        AddAndGetTest(_lockFreePool);
     }
 
     [Benchmark]
@@ -73,6 +85,12 @@ public class StringPoolBenchmarks
     public void DictionaryLock_Concurrent()
     {
         ConcurrentTest(_lockPool);
+    }
+
+    [Benchmark]
+    public void LockFree_Concurrent()
+    {
+        ConcurrentTest(_lockFreePool);
     }
 
     [Benchmark]

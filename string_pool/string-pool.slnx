@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="StringPoolBenchmark\StringPoolBenchmark.csproj" Type="Classic C#" />
-  <Project Path="StringPoolTests\StringPoolTests.csproj" Type="Classic C#" />
+    <Project Path="StringPoolBenchmark\StringPoolBenchmark.csproj" Type="Classic C#"/>
+    <Project Path="StringPoolTests\StringPoolTests.csproj" Type="Classic C#"/>
 </Solution>

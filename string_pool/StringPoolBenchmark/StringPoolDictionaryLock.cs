@@ -4,10 +4,16 @@ namespace StringPoolBenchmark;
 
 public sealed class StringPoolDictionaryLock : IStringPool
 {
-    private readonly Dictionary<int, string> _idToString = new();
+    private readonly Dictionary<int, string> _idToString;
     private readonly Lock _lock = new();
-    private readonly Dictionary<string, int> _stringToId = new();
+    private readonly Dictionary<string, int> _stringToId;
     private int _nextId = 1;
+
+    public StringPoolDictionaryLock(int initialCapacity)
+    {
+        _idToString = new Dictionary<int, string>(initialCapacity);
+        _stringToId = new Dictionary<string, int>(initialCapacity);
+    }
 
     public int GetId(string value)
     {
