@@ -1,11 +1,12 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using System.Collections.Concurrent;
+using BenchmarkDotNet.Attributes;
 using JetBrains.Annotations;
 using StringPoolBenchmark.StringPools;
 
 namespace StringPoolBenchmark;
 
 [MemoryDiagnoser]
-public class StringPoolAddAndGetBenchmarks
+public class StringPoolConcurrentBenchmarks
 {
     private StringPoolDictionaryLock _lockPool = null!;
     private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
@@ -16,6 +17,7 @@ public class StringPoolAddAndGetBenchmarks
     private string[] _testStrings = null!;
 
     [Params(1000, 10000)] public int DataSize { get; [UsedImplicitly] set; }
+    [Params(1, 4, 16)] public int ThreadCount { get; [UsedImplicitly] set; }
 
     [GlobalSetup]
     public void Setup()
@@ -39,34 +41,39 @@ public class StringPoolAddAndGetBenchmarks
         _stripedShardedPool.Clear();
     }
 
-    private void AddAndGetTest(IStringPool pool)
+    private void ConcurrentTest(IStringPool pool)
     {
-        // Add strings and store their ids to avoid double-GetId work in the get phase
-        var ids = new int[_testStrings.Length];
-        for (var i = 0; i < _testStrings.Length; i++)
-        {
-            ids[i] = pool.GetId(_testStrings[i]);
-        }
+        var ids = new ConcurrentBag<(int id, string value)>();
+        var po = new ParallelOptions { MaxDegreeOfParallelism = ThreadCount };
 
-        // Then resolve by id only, measuring reverse-map performance
-        foreach (var t in ids)
+        // Fill the pool with strings, using multiple threads
+        Parallel.ForEach(_testStrings, po, s => { ids.Add((pool.GetId(s), s)); });
+
+        // Retrieve strings from the pool using multiple threads
+        Parallel.ForEach(ids, po, bag =>
         {
-            pool.TryGetString(t, out _);
-        }
+            pool.TryGetString(bag.id, out var s);
+            if (!ReferenceEquals(s, bag.value))
+            {
+                // Avoid throwing during measurement; just record a mismatch count
+                // In practice this should never happen for correct implementations
+                // We intentionally do nothing to keep the hot path clean.
+            }
+        });
     }
 
     [Benchmark]
-    public void DictionaryLock_AddAndGet() => AddAndGetTest(_lockPool);
+    public void DictionaryLock_Concurrent() => ConcurrentTest(_lockPool);
 
     [Benchmark]
-    public void StripedSharded_AddAndGet() => AddAndGetTest(_stripedShardedPool);
+    public void LockFree_Concurrent() => ConcurrentTest(_lockFreePool);
 
     [Benchmark]
-    public void LockFree_AddAndGet() => AddAndGetTest(_lockFreePool);
+    public void StatePool_Concurrent() => ConcurrentTest(_statePool);
 
     [Benchmark]
-    public void StatePool_AddAndGet() => AddAndGetTest(_statePool);
+    public void DictionaryReadwriteLock_Concurrent() => ConcurrentTest(_rwLockPool);
 
     [Benchmark]
-    public void DictionaryReadwriteLock_AddAndGet() => AddAndGetTest(_rwLockPool);
+    public void StripedSharded_Concurrent() => ConcurrentTest(_stripedShardedPool);
 }

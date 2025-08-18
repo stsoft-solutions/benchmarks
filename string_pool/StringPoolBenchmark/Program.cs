@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
 using StringPoolBenchmark;
 
-BenchmarkRunner.Run<StringPoolBenchmarks>();
+BenchmarkRunner.Run<StringPoolAddAndGetBenchmarks>();
+BenchmarkRunner.Run<StringPoolConcurrentBenchmarks>();

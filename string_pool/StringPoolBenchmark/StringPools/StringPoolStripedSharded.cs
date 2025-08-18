@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace StringPoolBenchmark.StringPools;
 
@@ -72,6 +73,7 @@ public sealed class StringPoolStripedSharded : IStringPool
         return h % ShardCount;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int GetIdShardIndex(int id)
     {
         var h = id & 0x7FFFFFFF;
