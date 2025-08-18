@@ -1,4 +1,5 @@
 ﻿using StringPoolBenchmark;
+using StringPoolBenchmark.StringPools;
 
 namespace StringPoolTests;
 

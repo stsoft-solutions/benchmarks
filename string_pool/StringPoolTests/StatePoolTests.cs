@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using StringPoolBenchmark;
+using StringPoolBenchmark.StringPools;
 
 namespace StringPoolTests;
 

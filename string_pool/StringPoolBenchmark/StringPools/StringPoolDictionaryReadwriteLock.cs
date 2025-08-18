@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace StringPoolBenchmark;
+namespace StringPoolBenchmark.StringPools;
 
 public sealed class StringPoolDictionaryReadwriteLock : IStringPool, IDisposable
 {

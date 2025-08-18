@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace StringPoolBenchmark;
+namespace StringPoolBenchmark.StringPools;
 
 public class LockFreeStringIdMap : IStringPool
 {
@@ -166,8 +166,12 @@ public class LockFreeStringIdMap : IStringPool
     {
         if (id >= 1 && id < _reverseMap.Length)
         {
-            value = _reverseMap[id];
-            return true;
+            var v = _reverseMap[id];
+            if (v != null)
+            {
+                value = v;
+                return true;
+            }
         }
 
         value = null;

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using BenchmarkDotNet.Attributes;
 using JetBrains.Annotations;
+using StringPoolBenchmark.StringPools;
 
 namespace StringPoolBenchmark;
 
@@ -11,6 +12,7 @@ public class StringPoolBenchmarks
     private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
     private StringPoolState _statePool = null!;
     private LockFreeStringIdMap _lockFreePool = null!;
+    private StringPoolStripedSharded _stripedShardedPool = null!;
 
     private string[] _testStrings = null!;
     [Params(1000, 10000)] public int DataSize { get; [UsedImplicitly] set; }
@@ -22,7 +24,8 @@ public class StringPoolBenchmarks
         _lockPool = new StringPoolDictionaryLock(DataSize);
         _rwLockPool = new StringPoolDictionaryReadwriteLock(DataSize);
         _statePool = new StringPoolState(DataSize);
-        _lockFreePool = new LockFreeStringIdMap(DataSize); 
+        _lockFreePool = new LockFreeStringIdMap(DataSize);
+        _stripedShardedPool = new StringPoolStripedSharded(initialCapacity: DataSize, shardCount: Environment.ProcessorCount);
     }
 
     private void AddAndGetTest(IStringPool pool)
@@ -61,6 +64,12 @@ public class StringPoolBenchmarks
     public void DictionaryLock_AddAndGet()
     {
         AddAndGetTest(_lockPool);
+    }
+
+    [Benchmark]
+    public void StripedSharded_AddAndGet()
+    {
+        AddAndGetTest(_stripedShardedPool);
     }
 
     [Benchmark]
@@ -103,5 +112,11 @@ public class StringPoolBenchmarks
     public void DictionaryReadwriteLock_Concurrent()
     {
         ConcurrentTest(_rwLockPool);
+    }
+
+    [Benchmark]
+    public void StripedSharded_Concurrent()
+    {
+        ConcurrentTest(_stripedShardedPool);
     }
 }
