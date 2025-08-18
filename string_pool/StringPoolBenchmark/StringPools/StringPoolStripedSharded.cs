@@ -12,7 +12,7 @@ public sealed class StringPoolStripedSharded : IStringPool
 {
     private sealed class StringShard
     {
-        public readonly object Lock = new object();
+        public readonly object Lock = new();
         public readonly Dictionary<string, int> StringToId;
 
         public StringShard(int capacity)
@@ -23,7 +23,7 @@ public sealed class StringPoolStripedSharded : IStringPool
 
     private sealed class IdShard
     {
-        public readonly object Lock = new object();
+        public readonly object Lock = new();
         public readonly Dictionary<int, string> IdToString;
 
         public IdShard(int capacity)

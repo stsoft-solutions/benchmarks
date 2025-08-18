@@ -6,7 +6,7 @@ namespace StringPoolTests;
 public abstract class PoolTestsBase<TPool> where TPool : IStringPool
 {
     protected abstract TPool CreatePool();
-    
+
     [Fact]
     public void GetId_ShouldReturnSameIdForSameString()
     {
@@ -52,6 +52,7 @@ public abstract class PoolTestsBase<TPool> where TPool : IStringPool
         Assert.Null(value);
     }
 
+
     [Fact]
     public void Clear_ShouldRemoveAllEntries()
     {
@@ -67,7 +68,7 @@ public abstract class PoolTestsBase<TPool> where TPool : IStringPool
     [Fact]
     public void GetId_ShouldThrowArgumentNullExceptionForNullString()
     {
-        var pool = new StringPoolState(1);
+        var pool = CreatePool();
         Assert.Throws<ArgumentNullException>(() => pool.GetId(null!));
     }
 }

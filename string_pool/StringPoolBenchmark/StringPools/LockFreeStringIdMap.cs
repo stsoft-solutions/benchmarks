@@ -20,7 +20,7 @@ public class LockFreeStringIdMap : IStringPool
     {
         InitTables(initialCapacity);
     }
-    
+
     public LockFreeStringIdMap() : this(1 << 14)
     {
     }
@@ -92,7 +92,7 @@ public class LockFreeStringIdMap : IStringPool
                 break;
 
             if (existing == DeletedMarker || (existing != key && !existing.Equals(key))) continue;
-            
+
             id = entry.Id;
             return true;
         }
@@ -150,8 +150,9 @@ public class LockFreeStringIdMap : IStringPool
 
     public int GetId(string value)
     {
-        if(TryGetId(value, out var existingId)) return existingId;
-        
+        ArgumentNullException.ThrowIfNull(value);
+        if (TryGetId(value, out var existingId)) return existingId;
+
         while (true)
         {
             var id = TryInsert(value, out var inserted);

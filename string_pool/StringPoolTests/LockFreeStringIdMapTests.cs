@@ -1,5 +1,4 @@
 ﻿using JetBrains.Annotations;
-using StringPoolBenchmark;
 using StringPoolBenchmark.StringPools;
 
 namespace StringPoolTests;
@@ -9,6 +8,6 @@ public class LockFreeStringIdMapTests : PoolTestsBase<LockFreeStringIdMap>
 {
     protected override LockFreeStringIdMap CreatePool()
     {
-        return new LockFreeStringIdMap();
+        return new LockFreeStringIdMap(4);
     }
 }

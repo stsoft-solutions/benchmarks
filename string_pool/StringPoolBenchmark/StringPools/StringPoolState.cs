@@ -82,10 +82,10 @@ public sealed class StringPoolState : IStringPool
             IdToString = new ConcurrentDictionary<int, string>(-1, initialCapacity);
             StringToId = new ConcurrentDictionary<string, int>(-1, initialCapacity);
         }
-        
+
         public readonly ConcurrentDictionary<int, string> IdToString;
         public readonly ConcurrentDictionary<string, int> StringToId;
-        
+
         public int NextId;
     }
 }
