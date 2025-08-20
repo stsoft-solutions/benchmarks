@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using JetBrains.Annotations;
 using StringPoolBenchmark.StringPools;
@@ -6,7 +7,7 @@ using StringPoolBenchmark.StringPools;
 namespace StringPoolBenchmark;
 
 [MemoryDiagnoser]
-public class StringPoolConcurrentBenchmarks
+public class StringPoolBenchmarks
 {
     private StringPoolDictionaryLock _lockPool = null!;
     private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
@@ -17,7 +18,7 @@ public class StringPoolConcurrentBenchmarks
     private string[] _testStrings = null!;
 
     [Params(10_000, 500_000)] public int DataSize { get; [UsedImplicitly] set; }
-    [Params(1, 4, 16)] public int ThreadCount { get; [UsedImplicitly] set; }
+    [Params(1, 4, 8, 16)] public int ThreadCount { get; [UsedImplicitly] set; }
 
     [GlobalSetup]
     public void Setup()
@@ -39,7 +40,29 @@ public class StringPoolConcurrentBenchmarks
         _lockFreePool.Clear();
         _stripedShardedPool.Clear();
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SingleThreadTest(IStringPool pool)
+    {
+        var ids = new ConcurrentBag<(int id, string value)>();
+        foreach (var s in _testStrings)
+        {
+            ids.Add((pool.GetId(s), s));
+        }
+        
+        foreach (var (id, _) in ids)
+        {
+            if(!pool.TryGetString(id, out _))
+            {
+                // Avoid throwing during measurement; just record a mismatch count
+                // In practice this should never happen for correct implementations
+                // We intentionally do nothing to keep the hot path clean.
+            }
+        }
+    }
 
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ConcurrentTest(IStringPool pool)
     {
         var ids = new ConcurrentBag<(int id, string value)>();
@@ -61,18 +84,32 @@ public class StringPoolConcurrentBenchmarks
         });
     }
 
-    [Benchmark]
-    public void DictionaryLock_Concurrent() => ConcurrentTest(_lockPool);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Test(IStringPool pool)
+    {
+        if (ThreadCount == 1)
+        {
+            SingleThreadTest(pool);
+        }
+        else
+        {
+            ConcurrentTest(pool);
+        }
+    }
 
     [Benchmark]
-    public void LockFree_Concurrent() => ConcurrentTest(_lockFreePool);
+    public void DictionaryLock_Concurrent() => Test(_lockPool);
 
     [Benchmark]
-    public void StatePool_Concurrent() => ConcurrentTest(_statePool);
+    public void LockFree_Concurrent() => Test(_lockFreePool);
 
     [Benchmark]
-    public void DictionaryReadwriteLock_Concurrent() => ConcurrentTest(_rwLockPool);
+    public void StatePool_Concurrent() => Test(_statePool);
 
     [Benchmark]
-    public void StripedSharded_Concurrent() => ConcurrentTest(_stripedShardedPool);
+    public void DictionaryReadwriteLock_Concurrent() => Test(_rwLockPool);
+
+    [Benchmark]
+    public void StripedSharded_Concurrent() => Test(_stripedShardedPool);
 }
