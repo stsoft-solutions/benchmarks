@@ -1,12 +1,13 @@
 ﻿using BenchmarkDotNet.Attributes;
+using JetBrains.Annotations;
 using StringPoolBenchmark.StringPools;
 
 namespace StringPoolBenchmark;
 
 [MemoryDiagnoser]
-public class StringPoolAddAndGet1K
+public class StringPoolAddAndGet500K
 {
-    private const int DataSize = 1_000;
+    private const int DataSize = 500_000;
 
     private StringPoolDictionaryLock _lockPool = null!;
     private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
@@ -27,8 +28,8 @@ public class StringPoolAddAndGet1K
         _stripedShardedPool = new StringPoolStripedSharded(DataSize, Environment.ProcessorCount);
     }
 
-    [IterationSetup]
-    public void IterationSetup()
+    [IterationCleanup] 
+    public void IterationCleanup()
     {
         _lockPool.Clear();
         _rwLockPool.Clear();

@@ -16,7 +16,7 @@ public class StringPoolConcurrentBenchmarks
 
     private string[] _testStrings = null!;
 
-    [Params(1000, 10000)] public int DataSize { get; [UsedImplicitly] set; }
+    [Params(10_000, 500_000)] public int DataSize { get; [UsedImplicitly] set; }
     [Params(1, 4, 16)] public int ThreadCount { get; [UsedImplicitly] set; }
 
     [GlobalSetup]
@@ -30,10 +30,9 @@ public class StringPoolConcurrentBenchmarks
         _stripedShardedPool = new StringPoolStripedSharded(DataSize, Environment.ProcessorCount);
     }
 
-    [IterationSetup]
-    public void IterationSetup()
+    [IterationCleanup] 
+    public void IterationCleanup()
     {
-        // Ensure each benchmark iteration starts from a clean state to avoid cross-contamination
         _lockPool.Clear();
         _rwLockPool.Clear();
         _statePool.Clear();

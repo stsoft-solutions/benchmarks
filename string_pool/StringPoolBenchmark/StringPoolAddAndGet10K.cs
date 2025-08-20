@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using JetBrains.Annotations;
 using StringPoolBenchmark.StringPools;
 
 namespace StringPoolBenchmark;
@@ -28,8 +27,8 @@ public class StringPoolAddAndGet10K
         _stripedShardedPool = new StringPoolStripedSharded(DataSize, Environment.ProcessorCount);
     }
 
-    [IterationSetup]
-    public void IterationSetup()
+    [IterationCleanup] 
+    public void IterationCleanup()
     {
         _lockPool.Clear();
         _rwLockPool.Clear();
