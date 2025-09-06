@@ -25,7 +25,7 @@ public sealed class BenchmarkConfig : ManualConfig
         AddExporter(HtmlExporter.Default);
         AddExporter(CsvExporter.Default);
         AddExporter(CsvMeasurementsExporter.Default);
-        // Json exporter is version-dependent; use Brief to be safe
+        // JSON exporter is version-dependent; use Brief to be safe
         AddExporter(JsonExporter.Brief);
 
         // Enable memory diagnoser globally so memory columns (Allocated, Gen0/1/2) appear in results
@@ -34,10 +34,10 @@ public sealed class BenchmarkConfig : ManualConfig
         // Optional: console logger
         AddLogger(ConsoleLogger.Default);
 
-        // Keep default summary style
+        // Keep the default summary style
         SummaryStyle = SummaryStyle.Default;
 
         // Order for readability
-        WithOrderer(new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest));
+        //WithOrderer(new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest));
     }
 }

@@ -196,8 +196,11 @@ public class LockFreeStringIdMap : IStringPool
         if (id >= 1 && id < _reverseMap.Length)
         {
             var v = _reverseMap[id];
-            value = v;
-            return true;
+            if (v is not null)
+            {
+                value = v;
+                return true;
+            }
         }
 
         value = null;

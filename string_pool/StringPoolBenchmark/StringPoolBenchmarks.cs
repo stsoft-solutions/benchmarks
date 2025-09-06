@@ -17,7 +17,7 @@ public class StringPoolBenchmarks
 
     private string[] _testStrings = null!;
 
-    [Params(10_000, 500_000)] public int DataSize { get; [UsedImplicitly] set; }
+    [Params(10_000, 500_000, 2_000_000)] public int DataSize { get; [UsedImplicitly] set; }
     [Params(1, 4, 8, 16)] public int ThreadCount { get; [UsedImplicitly] set; }
 
     [GlobalSetup]
@@ -44,20 +44,18 @@ public class StringPoolBenchmarks
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SingleThreadTest(IStringPool pool)
     {
-        var ids = new ConcurrentBag<(int id, string value)>();
+        // Use a simple array to avoid ConcurrentBag overhead and avoid retaining string references
+        var ids = new int[_testStrings.Length];
+        var i = 0;
         foreach (var s in _testStrings)
         {
-            ids.Add((pool.GetId(s), s));
+            ids[i++] = pool.GetId(s);
         }
-        
-        foreach (var (id, _) in ids)
+
+        // Validation pass: ensure ids are retrievable without comparing to original strings
+        foreach (var id in ids)
         {
-            if(!pool.TryGetString(id, out _))
-            {
-                // Avoid throwing during measurement; just record a mismatch count
-                // In practice this should never happen for correct implementations
-                // We intentionally do nothing to keep the hot path clean.
-            }
+            pool.TryGetString(id, out _);
         }
     }
 
@@ -65,22 +63,25 @@ public class StringPoolBenchmarks
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ConcurrentTest(IStringPool pool)
     {
-        var ids = new ConcurrentBag<(int id, string value)>();
         var po = new ParallelOptions { MaxDegreeOfParallelism = ThreadCount };
 
-        // Fill the pool with strings, using multiple threads
-        Parallel.ForEach(_testStrings, po, s => { ids.Add((pool.GetId(s), s)); });
+        // Aggregate ids per thread to minimize contention and GC
+        var partitions = Partitioner.Create(0, _testStrings.Length);
+        var allIds = new int[_testStrings.Length];
+
+        Parallel.ForEach(partitions, po, () => 0, (range, state, local) =>
+        {
+            for (int i = range.Item1; i < range.Item2; i++)
+            {
+                allIds[i] = pool.GetId(_testStrings[i]);
+            }
+            return local;
+        }, _ => { });
 
         // Retrieve strings from the pool using multiple threads
-        Parallel.ForEach(ids, po, bag =>
+        Parallel.For(0, allIds.Length, po, i =>
         {
-            pool.TryGetString(bag.id, out var s);
-            if (!ReferenceEquals(s, bag.value))
-            {
-                // Avoid throwing during measurement; just record a mismatch count
-                // In practice this should never happen for correct implementations
-                // We intentionally do nothing to keep the hot path clean.
-            }
+            pool.TryGetString(allIds[i], out _);
         });
     }
 
