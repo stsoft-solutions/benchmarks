@@ -11,50 +11,49 @@ This repository is intended to help evaluate trade-offs between lock-based, lock
 BenchmarkDotNet v0.15.0, Windows 11 (10.0.26100.5074/24H2/2024Update/HudsonValley)
 12th Gen Intel Core i7-12700 2.10GHz, 1 CPU, 20 logical and 12 physical cores
 .NET SDK 9.0.304
-[Host]     : .NET 9.0.8 (9.0.825.36511), X64 RyuJIT AVX2
-Job-KJXREE : .NET 9.0.8 (9.0.825.36511), X64 RyuJIT AVX2
-
+  [Host]     : .NET 9.0.8 (9.0.825.36511), X64 RyuJIT AVX2
+  Job-UEODAN : .NET 9.0.8 (9.0.825.36511), X64 RyuJIT AVX2
 ```
 
 | Method                             | DataSize | ThreadCount | Mean           | Error        | StdDev       | Median         | Gen0      | Gen1      | Allocated    |
 |----------------------------------- |--------- |------------ |---------------:|-------------:|-------------:|---------------:|----------:|----------:|-------------:|
-| DictionaryLock_Concurrent          | 10000    | 1           |       814.2 us |     15.03 us |     14.06 us |       810.1 us |         - |         - |     668.4 KB |
-| StripedSharded_Concurrent          | 10000    | 1           |     1,018.5 us |     11.17 us |     11.47 us |     1,016.5 us |         - |         - |     668.4 KB |
-| DictionaryReadwriteLock_Concurrent | 10000    | 1           |     1,091.5 us |     12.58 us |     10.51 us |     1,093.1 us |         - |         - |     668.4 KB |
-| StripedSharded_Concurrent          | 10000    | 4           |     1,362.0 us |     26.84 us |     41.78 us |     1,350.5 us |         - |         - |    696.73 KB |
-| StatePool_Concurrent               | 10000    | 1           |     1,470.5 us |     55.39 us |    158.02 us |     1,511.5 us |         - |         - |   2923.37 KB |
-| StripedSharded_Concurrent          | 10000    | 8           |     1,626.1 us |    137.78 us |    399.72 us |     1,448.0 us |         - |         - |    709.43 KB |
-| StripedSharded_Concurrent          | 10000    | 16          |     1,630.8 us |    119.83 us |    345.74 us |     1,468.0 us |         - |         - |    647.37 KB |
-| StatePool_Concurrent               | 10000    | 4           |     1,753.6 us |     34.90 us |     96.71 us |     1,737.2 us |         - |         - |    2953.3 KB |
-| StatePool_Concurrent               | 10000    | 8           |     1,868.1 us |     37.97 us |    107.09 us |     1,864.8 us |         - |         - |    2961.5 KB |
-| StatePool_Concurrent               | 10000    | 16          |     2,047.5 us |     55.80 us |    156.47 us |     2,023.3 us |         - |         - |   2903.05 KB |
-| LockFree_Concurrent                | 10000    | 16          |     2,353.2 us |    187.77 us |    541.75 us |     2,139.2 us |         - |         - |     812.3 KB |
-| LockFree_Concurrent                | 10000    | 8           |     2,492.4 us |    176.00 us |    507.80 us |     2,277.9 us |         - |         - |     834.2 KB |
-| LockFree_Concurrent                | 10000    | 4           |     2,573.7 us |    269.87 us |    787.23 us |     2,093.5 us |         - |         - |    853.28 KB |
-| DictionaryLock_Concurrent          | 10000    | 4           |     2,711.9 us |     92.36 us |    255.92 us |     2,646.5 us |         - |         - |    632.38 KB |
-| DictionaryLock_Concurrent          | 10000    | 8           |     3,946.4 us |    149.91 us |    434.92 us |     3,946.6 us |         - |         - |    614.49 KB |
-| DictionaryReadwriteLock_Concurrent | 10000    | 4           |     4,068.6 us |    427.21 us |  1,259.65 us |     4,200.9 us |         - |         - |    696.73 KB |
-| DictionaryLock_Concurrent          | 10000    | 16          |     4,238.6 us |    139.88 us |    408.05 us |     4,286.0 us |         - |         - |    658.88 KB |
-| LockFree_Concurrent                | 10000    | 1           |     5,002.2 us |     99.52 us |    148.96 us |     5,024.9 us |         - |         - |    824.67 KB |
-| DictionaryReadwriteLock_Concurrent | 10000    | 8           |     7,802.3 us |    731.33 us |  2,156.35 us |     8,001.8 us |         - |         - |    645.65 KB |
-| DictionaryReadwriteLock_Concurrent | 10000    | 16          |    11,153.1 us |    950.13 us |  2,801.48 us |    10,717.5 us |         - |         - |    643.34 KB |
-| DictionaryLock_Concurrent          | 500000   | 1           |    39,637.7 us |    789.94 us |  1,846.45 us |    38,935.5 us |         - |         - |  24196.72 KB |
-| DictionaryReadwriteLock_Concurrent | 500000   | 1           |    54,106.5 us |  1,072.31 us |  1,003.04 us |    54,301.7 us |         - |         - |  24196.72 KB |
-| StripedSharded_Concurrent          | 500000   | 16          |    54,673.8 us |  1,073.00 us |  1,317.73 us |    54,875.2 us |         - |         - |  32458.35 KB |
-| StripedSharded_Concurrent          | 500000   | 8           |    59,962.3 us |  1,163.79 us |  1,553.63 us |    59,929.4 us |         - |         - |  30382.63 KB |
-| StripedSharded_Concurrent          | 500000   | 4           |    63,582.8 us |  1,264.66 us |  1,456.38 us |    63,444.7 us |         - |         - |  32417.16 KB |
-| StripedSharded_Concurrent          | 500000   | 1           |    63,837.6 us |  1,266.54 us |  2,251.27 us |    64,110.9 us |         - |         - |  24196.72 KB |
-| DictionaryReadwriteLock_Concurrent | 500000   | 4           |    84,834.7 us |  1,680.69 us |  2,714.00 us |    84,775.6 us |         - |         - |  28321.14 KB |
-| DictionaryLock_Concurrent          | 500000   | 4           |   103,127.2 us |  2,029.24 us |  3,334.09 us |   102,854.1 us |         - |         - |  28321.14 KB |
-| DictionaryLock_Concurrent          | 500000   | 16          |   111,672.3 us |  1,655.22 us |  1,382.18 us |   111,185.2 us |         - |         - |  30409.63 KB |
-| DictionaryLock_Concurrent          | 500000   | 8           |   124,693.8 us |  2,491.00 us |  2,208.21 us |   124,579.1 us |         - |         - |   28334.6 KB |
-| DictionaryReadwriteLock_Concurrent | 500000   | 8           |   153,795.5 us |  3,766.84 us | 10,868.18 us |   154,161.6 us |         - |         - |  30382.69 KB |
-| StatePool_Concurrent               | 500000   | 16          |   181,489.6 us |  5,786.71 us | 16,971.42 us |   182,113.8 us | 6000.0000 | 3000.0000 | 117370.91 KB |
-| StatePool_Concurrent               | 500000   | 1           |   185,557.3 us |  3,709.52 us |  5,077.63 us |   185,308.9 us | 6000.0000 | 3000.0000 | 110134.22 KB |
-| StatePool_Concurrent               | 500000   | 8           |   198,556.9 us |  4,679.11 us | 13,723.01 us |   200,637.4 us | 6000.0000 | 3000.0000 | 116320.13 KB |
-| StatePool_Concurrent               | 500000   | 4           |   198,779.7 us |  3,954.41 us |  5,412.84 us |   199,386.7 us | 6000.0000 | 3000.0000 | 114259.25 KB |
-| DictionaryReadwriteLock_Concurrent | 500000   | 16          |   289,546.4 us |  5,759.24 us |  5,656.34 us |   290,302.2 us |         - |         - |  27337.44 KB |
-| LockFree_Concurrent                | 500000   | 16          |   842,028.2 us | 23,601.70 us | 68,847.28 us |   858,899.9 us |         - |         - |  38223.34 KB |
-| LockFree_Concurrent                | 500000   | 8           |   866,437.7 us | 17,278.15 us | 30,261.29 us |   868,547.5 us |         - |         - |  40244.11 KB |
-| LockFree_Concurrent                | 500000   | 4           | 1,188,720.2 us | 21,940.06 us | 20,522.75 us | 1,192,219.4 us |         - |         - |  40230.13 KB |
-| LockFree_Concurrent                | 500000   | 1           | 4,557,575.7 us | 72,943.46 us | 81,076.46 us | 4,554,029.5 us |         - |         - |  32009.24 KB |
+| DictionaryLock_Concurrent          | 10000    | 1           |       783.9 us |     14.67 us |     13.72 us |       782.6 us |         - |         - |    668.68 KB |
+| StripedSharded_Concurrent          | 10000    | 1           |     1,016.8 us |     18.55 us |     24.77 us |     1,013.8 us |         - |         - |     668.4 KB |
+| DictionaryReadwriteLock_Concurrent | 10000    | 1           |     1,074.4 us |     18.93 us |     21.04 us |     1,066.5 us |         - |         - |     668.4 KB |
+| StripedSharded_Concurrent          | 10000    | 4           |     1,327.5 us |     25.76 us |     45.11 us |     1,318.7 us |         - |         - |    696.68 KB |
+| StripedSharded_Concurrent          | 10000    | 8           |     1,522.5 us |    139.38 us |    402.14 us |     1,330.5 us |         - |         - |     709.7 KB |
+| StatePool_Concurrent               | 10000    | 1           |     1,532.2 us |     30.48 us |     29.93 us |     1,531.9 us |         - |         - |   2923.37 KB |
+| StripedSharded_Concurrent          | 10000    | 16          |     1,566.6 us |    107.37 us |    308.08 us |     1,420.9 us |         - |         - |    615.66 KB |
+| StatePool_Concurrent               | 10000    | 4           |     1,807.8 us |     57.43 us |    164.79 us |     1,762.1 us |         - |         - |   2952.16 KB |
+| StatePool_Concurrent               | 10000    | 8           |     1,850.0 us |     46.10 us |    131.51 us |     1,813.3 us |         - |         - |   2962.56 KB |
+| StatePool_Concurrent               | 10000    | 16          |     1,969.3 us |     40.15 us |    111.93 us |     1,970.9 us |         - |         - |   2966.98 KB |
+| LockFree_Concurrent                | 10000    | 16          |     2,582.6 us |    202.43 us |    587.30 us |     2,309.9 us |         - |         - |    828.51 KB |
+| DictionaryLock_Concurrent          | 10000    | 4           |     2,805.9 us |     91.52 us |    241.09 us |     2,755.5 us |         - |         - |    632.72 KB |
+| LockFree_Concurrent                | 10000    | 4           |     2,928.0 us |    252.33 us |    736.07 us |     2,560.9 us |         - |         - |       853 KB |
+| LockFree_Concurrent                | 10000    | 8           |     3,247.3 us |    240.56 us |    701.73 us |     3,353.1 us |         - |         - |    834.11 KB |
+| DictionaryLock_Concurrent          | 10000    | 16          |     3,415.4 us |     66.02 us |     76.03 us |     3,441.5 us |         - |         - |    694.55 KB |
+| DictionaryReadwriteLock_Concurrent | 10000    | 4           |     3,856.8 us |    549.19 us |  1,619.29 us |     3,033.1 us |         - |         - |    697.07 KB |
+| DictionaryLock_Concurrent          | 10000    | 8           |     3,946.0 us |    132.27 us |    385.84 us |     4,021.3 us |         - |         - |    633.61 KB |
+| LockFree_Concurrent                | 10000    | 1           |     6,079.1 us |    116.61 us |    129.61 us |     6,055.0 us |         - |         - |    824.67 KB |
+| DictionaryReadwriteLock_Concurrent | 10000    | 8           |     7,594.7 us |    654.29 us |  1,929.18 us |     7,857.6 us |         - |         - |    677.86 KB |
+| DictionaryReadwriteLock_Concurrent | 10000    | 16          |    10,628.1 us |    941.25 us |  2,654.82 us |    10,073.0 us |         - |         - |    687.49 KB |
+| DictionaryLock_Concurrent          | 500000   | 1           |    38,197.4 us |    708.04 us |  1,430.27 us |    37,836.0 us |         - |         - |  24197.05 KB |
+| DictionaryReadwriteLock_Concurrent | 500000   | 1           |    51,381.9 us |    654.02 us |    642.34 us |    51,524.4 us |         - |         - |  24196.72 KB |
+| StripedSharded_Concurrent          | 500000   | 16          |    56,211.8 us |  1,111.75 us |  1,365.33 us |    56,041.2 us |         - |         - |  29385.61 KB |
+| StripedSharded_Concurrent          | 500000   | 8           |    58,371.2 us |  1,154.08 us |  1,185.16 us |    58,396.9 us |         - |         - |   28334.6 KB |
+| StripedSharded_Concurrent          | 500000   | 1           |    58,788.0 us |  1,174.91 us |    981.10 us |    59,021.1 us |         - |         - |  24197.05 KB |
+| StripedSharded_Concurrent          | 500000   | 4           |    63,721.1 us |  1,245.72 us |  1,279.27 us |    63,522.4 us |         - |         - |  28321.75 KB |
+| DictionaryReadwriteLock_Concurrent | 500000   | 4           |    81,513.0 us |  1,341.48 us |  1,491.05 us |    81,147.1 us |         - |         - |  28321.14 KB |
+| DictionaryLock_Concurrent          | 500000   | 4           |   103,907.6 us |  2,046.41 us |  3,062.97 us |   103,842.6 us |         - |         - |  28321.14 KB |
+| DictionaryLock_Concurrent          | 500000   | 16          |   106,449.9 us |  2,068.85 us |  2,831.87 us |   106,573.7 us |         - |         - |  31433.53 KB |
+| DictionaryLock_Concurrent          | 500000   | 8           |   115,511.7 us |  2,252.15 us |  2,681.03 us |   115,284.5 us |         - |         - |  30382.81 KB |
+| DictionaryReadwriteLock_Concurrent | 500000   | 8           |   133,563.0 us |  2,667.34 us |  7,026.83 us |   131,638.4 us |         - |         - |   28334.6 KB |
+| StatePool_Concurrent               | 500000   | 16          |   166,602.5 us |  4,012.38 us | 11,767.61 us |   168,662.4 us | 6000.0000 | 3000.0000 | 115323.23 KB |
+| StatePool_Concurrent               | 500000   | 1           |   168,250.7 us |  3,345.74 us |  4,350.41 us |   166,875.0 us | 6000.0000 | 3000.0000 | 110134.22 KB |
+| StatePool_Concurrent               | 500000   | 8           |   184,287.1 us |  3,760.95 us | 11,030.21 us |   185,479.9 us | 6000.0000 | 3000.0000 | 114272.29 KB |
+| StatePool_Concurrent               | 500000   | 4           |   193,618.6 us |  3,865.53 us | 10,384.48 us |   196,225.2 us | 6000.0000 | 3000.0000 | 110162.62 KB |
+| DictionaryReadwriteLock_Concurrent | 500000   | 16          |   254,718.6 us |  5,089.49 us | 11,996.53 us |   256,658.3 us |         - |         - |  27337.38 KB |
+| LockFree_Concurrent                | 500000   | 16          |   671,468.9 us | 12,733.84 us | 12,506.34 us |   672,706.9 us |         - |         - |  39246.93 KB |
+| LockFree_Concurrent                | 500000   | 8           | 1,070,349.4 us | 21,328.70 us | 54,673.61 us | 1,070,721.7 us |         - |         - |  42291.98 KB |
+| LockFree_Concurrent                | 500000   | 4           | 1,878,013.9 us | 23,605.25 us | 22,080.37 us | 1,870,702.8 us |         - |         - |   40230.5 KB |
+| LockFree_Concurrent                | 500000   | 1           | 5,807,125.6 us | 20,390.92 us | 17,027.34 us | 5,808,575.3 us |         - |         - |  32009.52 KB |
