@@ -1,10 +1,4 @@
-﻿<style>
-    table {
-        width: 100%;
-    }
-</style>
-
-# String Pool Benchmark Suite
+﻿# String Pool Benchmark Suite
 This benchmark suite compares the performance of various concurrent dictionary implementations used in a string pool. The implementations tested include:
 - **DictionaryLock**: A standard dictionary protected by a lock.
 - **DictionaryReadwriteLock**: A standard dictionary protected by a read-write lock.
