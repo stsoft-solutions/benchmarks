@@ -1,12 +1,17 @@
-﻿# String Pool Benchmark Suite
+﻿<style>
+    table {
+        width: 100%;
+    }
+</style>
 
-A .NET 9 solution that compares multiple implementations of a string-to-id/id-to-string pool. It includes:
-- High-quality microbenchmarks built with BenchmarkDotNet
-- Memory diagnostics (Allocated, Gen0/1/2)
-- Exported results in Markdown, HTML, CSV (including per-measurement), and JSON
-- A comprehensive unit test suite (56 tests)
+# String Pool Benchmark Suite
+This benchmark suite compares the performance of various concurrent dictionary implementations used in a string pool. The implementations tested include:
+- **DictionaryLock**: A standard dictionary protected by a lock.
+- **DictionaryReadwriteLock**: A standard dictionary protected by a read-write lock.
+- **StripedSharded**: A dictionary implementation that uses sharding to reduce contention.
+- **LockFree**: A lock-free dictionary implementation.
+- **StatePool**: A custom implementation that uses a pool of states for managing concurrency.
 
-This repository is intended to help evaluate trade-offs between lock-based, lock-free, striped/sharded, and concurrent-dictionary based designs for string interning/pooling scenarios.
 ```text
 BenchmarkDotNet v0.15.0, Windows 11 (10.0.26100.5074/24H2/2024Update/HudsonValley)
 12th Gen Intel Core i7-12700 2.10GHz, 1 CPU, 20 logical and 12 physical cores
