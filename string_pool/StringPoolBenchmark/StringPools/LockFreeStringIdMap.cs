@@ -14,7 +14,6 @@ public class LockFreeStringIdMap : IStringPool
     private string[] _reverseMap = [];
     private int _nextId = 1;
     private int _threshold;
-    private const string DeletedMarker = "\uFFFF__DELETED__";
 
     public LockFreeStringIdMap(int initialCapacity)
     {
@@ -25,33 +24,50 @@ public class LockFreeStringIdMap : IStringPool
     {
     }
 
+    private static int NextPowerOfTwo(int value)
+    {
+        if (value < 2) return 2;
+        // Round up to next power of two
+        value--;
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        value++;
+        return value;
+    }
+
     private void InitTables(int capacity)
     {
-        _entries = new Entry[capacity];
-        for (var i = 0; i < capacity; i++)
+        var cap = NextPowerOfTwo(capacity);
+
+        _entries = new Entry[cap];
+        for (var i = 0; i < cap; i++)
         {
             _entries[i] = new Entry();
         }
 
-        _reverseMap = new string[capacity];
-        _threshold = (int)(capacity * 0.75);
+        _reverseMap = new string[cap];
+        _threshold = (int)(cap * 0.75);
     }
 
     private int TryInsert(string key, out bool inserted)
     {
         var entries = _entries;
         var cap = entries.Length;
-        var hash = (key.GetHashCode() & 0x7FFFFFFF) % cap;
+        var mask = cap - 1;
+        var hash = (key.GetHashCode() & 0x7FFFFFFF);
 
         for (var i = 0; i < cap; i++)
         {
-            var index = (hash + i) % cap;
+            var index = (hash + i) & mask;
             var entry = entries[index];
 
             var existing = Volatile.Read(ref entry.Key);
-            if (existing == null || existing == DeletedMarker)
+            if (existing == null)
             {
-                if (Interlocked.CompareExchange(ref entry.Key, key, existing) == existing)
+                if (Interlocked.CompareExchange(ref entry.Key, key, null) == null)
                 {
                     var newId = Interlocked.Increment(ref _nextId) - 1;
                     entry.Id = newId;
@@ -66,8 +82,8 @@ public class LockFreeStringIdMap : IStringPool
                 existing = Volatile.Read(ref entry.Key);
             }
 
-            if (existing == null || (existing != key && !existing.Equals(key))) continue;
-
+            if (!ReferenceEquals(existing, key) && !string.Equals(existing, key, StringComparison.Ordinal)) continue;
+            
             inserted = true;
             return entry.Id;
         }
@@ -80,19 +96,20 @@ public class LockFreeStringIdMap : IStringPool
     {
         var entries = _entries;
         var cap = entries.Length;
-        var hash = (key.GetHashCode() & 0x7FFFFFFF) % cap;
+        var mask = cap - 1;
+        var hash = (key.GetHashCode() & 0x7FFFFFFF);
 
         for (var i = 0; i < cap; i++)
         {
-            var index = (hash + i) % cap;
+            var index = (hash + i) & mask;
             var entry = entries[index];
 
             var existing = Volatile.Read(ref entry.Key);
             if (existing == null)
                 break;
 
-            if (existing == DeletedMarker || (existing != key && !existing.Equals(key))) continue;
-
+            if (!ReferenceEquals(existing, key) && !string.Equals(existing, key, StringComparison.Ordinal)) continue;
+            
             id = entry.Id;
             return true;
         }
@@ -113,39 +130,50 @@ public class LockFreeStringIdMap : IStringPool
 
     private void Expand()
     {
-        var current = _entries;
-        if (_nextId < _threshold)
-            return;
-
-        var newCap = current.Length * 2;
-        var newEntries = new Entry[newCap];
-        for (var i = 0; i < newCap; i++)
+        while (true)
         {
-            newEntries[i] = new Entry();
-        }
+            var current = _entries;
+            if (_nextId < _threshold)
+                return;
 
-        foreach (var entry in current)
-        {
-            if (entry.Key == null || entry.Key == DeletedMarker)
-                continue;
-
-            var hash = (entry.Key.GetHashCode() & 0x7FFFFFFF) % newCap;
+            var newCap = current.Length * 2;
+            var newEntries = new Entry[newCap];
             for (var i = 0; i < newCap; i++)
             {
-                var index = (hash + i) % newCap;
-                var newEntry = newEntries[index];
+                newEntries[i] = new Entry();
+            }
 
-                if (Volatile.Read(ref newEntry.Key) == null)
+            foreach (var entry in current)
+            {
+                if (entry.Key == null)
+                    continue;
+
+                var hash = (entry.Key.GetHashCode() & 0x7FFFFFFF);
+                var mask = newCap - 1;
+                for (var i = 0; i < newCap; i++)
                 {
-                    newEntry.Key = entry.Key;
-                    newEntry.Id = entry.Id;
-                    break;
+                    var index = (hash + i) & mask;
+                    var newEntry = newEntries[index];
+
+                    if (newEntry.Key == null)
+                    {
+                        newEntry.Key = entry.Key;
+                        newEntry.Id = entry.Id;
+                        break;
+                    }
                 }
             }
-        }
 
-        Interlocked.CompareExchange(ref _entries, newEntries, current);
-        _threshold = (int)(newCap * 0.75);
+            if (Interlocked.CompareExchange(ref _entries, newEntries, current) == current)
+            {
+                Volatile.Write(ref _threshold, (int)(newCap * 0.75));
+                return;
+            }
+
+            // Another thread expanded first; recompute a threshold based on current capacity and retry
+            var capNow = Volatile.Read(ref _entries).Length;
+            Volatile.Write(ref _threshold, (int)(capNow * 0.75));
+        }
     }
 
     public int GetId(string value)
@@ -168,11 +196,8 @@ public class LockFreeStringIdMap : IStringPool
         if (id >= 1 && id < _reverseMap.Length)
         {
             var v = _reverseMap[id];
-            if (v != null)
-            {
-                value = v;
-                return true;
-            }
+            value = v;
+            return true;
         }
 
         value = null;

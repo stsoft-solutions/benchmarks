@@ -99,17 +99,17 @@ public class StringPoolBenchmarks
     }
 
     [Benchmark]
-    public void DictionaryLock_Concurrent() => Test(_lockPool);
+    public void DictionaryLock() => Test(_lockPool);
 
     [Benchmark]
-    public void LockFree_Concurrent() => Test(_lockFreePool);
+    public void LockFree() => Test(_lockFreePool);
 
     [Benchmark]
-    public void StatePool_Concurrent() => Test(_statePool);
+    public void StatePool() => Test(_statePool);
 
     [Benchmark]
-    public void DictionaryReadwriteLock_Concurrent() => Test(_rwLockPool);
+    public void DictionaryReadwriteLock() => Test(_rwLockPool);
 
     [Benchmark]
-    public void StripedSharded_Concurrent() => Test(_stripedShardedPool);
+    public void StripedSharded() => Test(_stripedShardedPool);
 }
