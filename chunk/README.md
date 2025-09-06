@@ -1,10 +1,10 @@
 # Chunk enumeration
-Split a IEnumerable<T> into chunks of IEnumerable<T> with a specified size.
+Split an IEnumerable<T> into chunks of IEnumerable<T> with a specified size.
 
 Chunk size = 50;
 
 - ChunkCore - .Net implementation with T[] Chunk()
-- ChunkLigh - use a special structure to manage an IEnumerable
+- ChunkLight - use a special structure to manage an IEnumerable
 - Chunk - simplest implementation with yield.
 
 ## Results
