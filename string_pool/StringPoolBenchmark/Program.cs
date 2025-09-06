@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
 using StringPoolBenchmark;
 
-BenchmarkRunner.Run<StringPoolBenchmarks>();
+var config = new BenchmarkConfig();
+BenchmarkRunner.Run<StringPoolBenchmarks>(config);

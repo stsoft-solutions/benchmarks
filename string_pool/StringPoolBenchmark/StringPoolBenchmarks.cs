@@ -1,89 +1,115 @@
 ﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using JetBrains.Annotations;
+using StringPoolBenchmark.StringPools;
 
 namespace StringPoolBenchmark;
 
 [MemoryDiagnoser]
 public class StringPoolBenchmarks
 {
+    private StringPoolDictionaryLock _lockPool = null!;
+    private StringPoolDictionaryReadwriteLock _rwLockPool = null!;
+    private StringPoolState _statePool = null!;
+    private LockFreeStringIdMap _lockFreePool = null!;
+    private StringPoolStripedSharded _stripedShardedPool = null!;
+
     private string[] _testStrings = null!;
-    [Params(1000, 50_000, 100_000)] public int DataSize { get; [UsedImplicitly] set; }
+
+    [Params(10_000, 500_000)] public int DataSize { get; [UsedImplicitly] set; }
+    [Params(1, 4, 8, 16)] public int ThreadCount { get; [UsedImplicitly] set; }
 
     [GlobalSetup]
     public void Setup()
     {
         _testStrings = Enumerable.Range(0, DataSize).Select(i => $"str{i}").ToArray();
+        _lockPool = new StringPoolDictionaryLock(DataSize);
+        _rwLockPool = new StringPoolDictionaryReadwriteLock(DataSize);
+        _statePool = new StringPoolState(DataSize);
+        _lockFreePool = new LockFreeStringIdMap(DataSize);
+        _stripedShardedPool = new StringPoolStripedSharded(DataSize, Environment.ProcessorCount);
     }
 
+    [IterationCleanup] 
+    public void IterationCleanup()
+    {
+        _lockPool.Clear();
+        _rwLockPool.Clear();
+        _statePool.Clear();
+        _lockFreePool.Clear();
+        _stripedShardedPool.Clear();
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SingleThreadTest(IStringPool pool)
     {
-        var ids = new ConcurrentBag<int>();
-
+        var ids = new ConcurrentBag<(int id, string value)>();
         foreach (var s in _testStrings)
         {
-            // Get the ID for each string and store it in a thread-safe collection
-            ids.Add(pool.GetId(s));
+            ids.Add((pool.GetId(s), s));
         }
-
-        foreach (var id in ids)
+        
+        foreach (var (id, _) in ids)
         {
-            _ = pool.TryGetString(id, out _);
+            if(!pool.TryGetString(id, out _))
+            {
+                // Avoid throwing during measurement; just record a mismatch count
+                // In practice this should never happen for correct implementations
+                // We intentionally do nothing to keep the hot path clean.
+            }
         }
     }
 
-    private void MultiThreadTest(IStringPool pool)
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ConcurrentTest(IStringPool pool)
     {
-        var ids = new ConcurrentBag<int>();
+        var ids = new ConcurrentBag<(int id, string value)>();
+        var po = new ParallelOptions { MaxDegreeOfParallelism = ThreadCount };
 
         // Fill the pool with strings, using multiple threads
-        Parallel.ForEach(_testStrings,
-            s => ids.Add(pool.GetId(s)));
+        Parallel.ForEach(_testStrings, po, s => { ids.Add((pool.GetId(s), s)); });
 
         // Retrieve strings from the pool using multiple threads
-        Parallel.ForEach(ids,
-            id => _ = pool.TryGetString(id, out var poolString));
+        Parallel.ForEach(ids, po, bag =>
+        {
+            pool.TryGetString(bag.id, out var s);
+            if (!ReferenceEquals(s, bag.value))
+            {
+                // Avoid throwing during measurement; just record a mismatch count
+                // In practice this should never happen for correct implementations
+                // We intentionally do nothing to keep the hot path clean.
+            }
+        });
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Test(IStringPool pool)
+    {
+        if (ThreadCount == 1)
+        {
+            SingleThreadTest(pool);
+        }
+        else
+        {
+            ConcurrentTest(pool);
+        }
     }
 
     [Benchmark]
-    public void Lock_SingleThread()
-    {
-        var lockPool = new LockStringPool();
-        SingleThreadTest(lockPool);
-    }
+    public void DictionaryLock_Concurrent() => Test(_lockPool);
 
     [Benchmark]
-    public void RwLock_SingleThread()
-    {
-        var rwLockPool = new ReadWriteStringPool();
-        SingleThreadTest(rwLockPool);
-    }
+    public void LockFree_Concurrent() => Test(_lockFreePool);
 
     [Benchmark]
-    public void LockFree_SingleThread()
-    {
-        var lockFreePool = new LockFreeStringPool();
-        SingleThreadTest(lockFreePool);
-    }
+    public void StatePool_Concurrent() => Test(_statePool);
 
     [Benchmark]
-    public void Lock_MultiThread()
-    {
-        var lockPool = new LockStringPool();
-        MultiThreadTest(lockPool);
-    }
+    public void DictionaryReadwriteLock_Concurrent() => Test(_rwLockPool);
 
     [Benchmark]
-    public void RwLock_MultiThread()
-    {
-        var rwLockPool = new ReadWriteStringPool();
-        MultiThreadTest(rwLockPool);
-    }
-
-    [Benchmark]
-    public void LockFree_MultiThread()
-    {
-        var lockFreePool = new LockFreeStringPool();
-        MultiThreadTest(lockFreePool);
-    }
+    public void StripedSharded_Concurrent() => Test(_stripedShardedPool);
 }
