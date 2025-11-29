@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using System.Diagnostics;
 
+using System.Collections;
+using System.Diagnostics;
+
 namespace ChunkEnumerableBenchmark;
 
 /// <summary>
@@ -13,17 +16,17 @@ public readonly struct Chunk<T> : IEnumerable<T>
     // This design requires that the caller fully enumerates one chunk
     // before calling MoveNext on the outer enumerator.
     private readonly IEnumerator<T> _source;
-    private readonly int _chunkSize;
+    private readonly ChunkContext _context;
 
-    internal Chunk(IEnumerator<T> source, int chunkSize)
+    internal Chunk(IEnumerator<T> source, ChunkContext context)
     {
         _source = source;
-        _chunkSize = chunkSize;
+        _context = context;
     }
 
     public Enumerator GetEnumerator()
     {
-        return new Enumerator(_source, _chunkSize);
+        return new Enumerator(_source, _context);
     }
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
@@ -39,14 +42,14 @@ public readonly struct Chunk<T> : IEnumerable<T>
     public struct Enumerator : IEnumerator<T>
     {
         private readonly IEnumerator<T> _source;
-        private int _remaining;
+        private readonly ChunkContext _context;
         private bool _first;
         private T _current;
 
-        internal Enumerator(IEnumerator<T> source, int chunkSize)
+        internal Enumerator(IEnumerator<T> source, ChunkContext context)
         {
             _source = source;
-            _remaining = chunkSize;
+            _context = context;
             _first = true;
             _current = default!;
         }
@@ -70,15 +73,15 @@ public readonly struct Chunk<T> : IEnumerable<T>
             {
                 _first = false;
                 _current = _source.Current;
-                _remaining--; // one element already taken
+                // One element already taken (accounted for in context.Remaining initialization)
                 return true;
             }
 
-            if (_remaining <= 0 || !_source.MoveNext()) return false;
+            if (_context.Remaining <= 0 || !_source.MoveNext()) return false;
 
             // Continue for the rest of the chunk.
             _current = _source.Current;
-            _remaining--;
+            _context.Remaining--;
             return true;
         }
 

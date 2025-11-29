@@ -5,87 +5,51 @@ namespace StringPoolBenchmark.StringPools;
 
 public sealed class StringPoolState : IStringPool
 {
-    private readonly int _initialCapacity;
-    private volatile PoolState _state;
+    private readonly ConcurrentDictionary<int, string> _idToString;
+    private readonly ConcurrentDictionary<string, int> _stringToId;
+    private readonly object _lock = new(); // Changed from Lock to object for standard C# locking
+    private int _nextId = 1;
 
     public StringPoolState(int initialCapacity)
     {
-        _initialCapacity = initialCapacity;
-        _state = new PoolState(_initialCapacity);
+        _idToString = new ConcurrentDictionary<int, string>(Environment.ProcessorCount, initialCapacity);
+        _stringToId = new ConcurrentDictionary<string, int>(Environment.ProcessorCount, initialCapacity);
     }
 
     public int GetId(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        while (true)
+        // Fast path: lock-free read
+        if (_stringToId.TryGetValue(value, out var existingId))
+            return existingId;
+
+        // Slow path: lock to ensure atomicity of ID generation and insertion
+        lock (_lock)
         {
-            var state = _state;
+            // Double-check locking
+            if (_stringToId.TryGetValue(value, out existingId))
+                return existingId;
 
-            // Try to get or add the string atomically
-            int newId;
-            var added = false;
-            var id = state.StringToId.GetOrAdd(value, _ =>
-            {
-                newId = Interlocked.Increment(ref state.NextId);
-                added = true;
-                return newId;
-            });
-
-            if (added)
-                // Only the thread that added the string should add to IdToString
-                state.IdToString.TryAdd(id, value);
-
+            var id = _nextId++;
+            _stringToId.TryAdd(value, id);
+            _idToString.TryAdd(id, value);
             return id;
         }
     }
 
     public bool TryGetString(int id, [MaybeNullWhen(false)] out string value)
     {
-        var state = _state;
-        return state.IdToString.TryGetValue(id, out value);
+        return _idToString.TryGetValue(id, out value);
     }
 
     public void Clear()
     {
-        // Atomic swap in a new state
-        _state = new PoolState(_initialCapacity);
-    }
-
-    public int GetId1(string value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        while (true)
+        lock (_lock)
         {
-            var state = _state;
-
-            if (state.StringToId.TryGetValue(value, out var existingId))
-                return existingId;
-
-            var newId = Interlocked.Increment(ref state.NextId);
-
-            // If another thread added it, retry
-            if (!state.StringToId.TryAdd(value, newId))
-                continue;
-
-            state.IdToString.TryAdd(newId, value);
-
-            return newId;
+            _stringToId.Clear();
+            _idToString.Clear();
+            _nextId = 1;
         }
-    }
-
-    private class PoolState
-    {
-        public PoolState(int initialCapacity)
-        {
-            IdToString = new ConcurrentDictionary<int, string>(-1, initialCapacity);
-            StringToId = new ConcurrentDictionary<string, int>(-1, initialCapacity);
-        }
-
-        public readonly ConcurrentDictionary<int, string> IdToString;
-        public readonly ConcurrentDictionary<string, int> StringToId;
-
-        public int NextId;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections;
 
 namespace ChunkEnumerableBenchmark;
 
@@ -37,12 +38,14 @@ public readonly struct ChunkEnumerable<T> : IEnumerable<Chunk<T>>
         private IEnumerator<T>? _source;
         private readonly int _chunkSize;
         private Chunk<T> _current;
+        private readonly ChunkContext _context;
 
         internal Enumerator(IEnumerator<T> source, int chunkSize)
         {
             _source = source;
             _chunkSize = chunkSize;
             _current = default;
+            _context = new ChunkContext();
         }
 
         public Chunk<T> Current => _current;
@@ -53,6 +56,17 @@ public readonly struct ChunkEnumerable<T> : IEnumerable<Chunk<T>>
             if (_source is null)
                 return false;
 
+            // Drain remaining elements from the previous chunk if any
+            while (_context.Remaining > 0)
+            {
+                if (!_source.MoveNext())
+                {
+                    _context.Remaining = 0;
+                    break;
+                }
+                _context.Remaining--;
+            }
+
             // Try to advance the source. If false, we're done.
             if (!_source.MoveNext())
             {
@@ -61,8 +75,12 @@ public readonly struct ChunkEnumerable<T> : IEnumerable<Chunk<T>>
                 return false;
             }
 
+            // Reset context for the new chunk
+            // We already consumed 1 element (the first one)
+            _context.Remaining = _chunkSize - 1;
+
             // Create a new chunk that “starts” with the current element.
-            _current = new Chunk<T>(_source, _chunkSize);
+            _current = new Chunk<T>(_source, _context);
             return true;
         }
 
@@ -77,4 +95,9 @@ public readonly struct ChunkEnumerable<T> : IEnumerable<Chunk<T>>
             _source = null;
         }
     }
+}
+
+internal sealed class ChunkContext
+{
+    public int Remaining;
 }
